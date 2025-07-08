@@ -2,8 +2,18 @@ import axios from "axios";
 import dotenv from "dotenv";
 import * as cheerio from "cheerio";
 import { google } from "@ai-sdk/google";
+import { ChromaClient } from "chromadb";
 
 dotenv.config();
+
+const chroma = new ChromaClient({ path: "http://localhost:8000" });
+try {
+  const heartbeat = await chroma.heartbeat();
+  console.log("ChromaDB is running:", heartbeat);
+} catch (error) {
+  console.error("ChromaDB connection failed:", error.message);
+}
+
 async function scrapeWebpage(url = "") {
   const { data } = await axios.get(url);
   const $ = cheerio.load(data);
@@ -44,9 +54,6 @@ async function ingest(url = "") {
     const bodyEmbedding = await generateVectorEmbeddings({ text: chunk });
     console.log("Chunk Embedding:", bodyEmbedding);
   }
-
-  console.log("Head Embedding:", headEmbedding);
-  console.log("Body Embedding:", bodyEmbedding);
 }
 scrapeWebpage("https://piyushgarg.dev").then(console.log);
 
