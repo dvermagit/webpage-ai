@@ -10,7 +10,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@ai-sdk/google": "^1.2.22",
     "axios": "^1.10.0",
-    "cheerio": "^1.1.0"
+    "cheerio": "^1.1.0",
+    "dotenv": "^17.1.0"
   }
 }
