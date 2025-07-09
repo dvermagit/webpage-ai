@@ -7,12 +7,15 @@ import { ChromaClient } from "chromadb";
 dotenv.config();
 
 const chroma = new ChromaClient({ path: "http://localhost:8000" });
-try {
-  const heartbeat = await chroma.heartbeat();
-  console.log("ChromaDB is running:", heartbeat);
-} catch (error) {
-  console.error("ChromaDB connection failed:", error.message);
-}
+chroma.heartbeat();
+// try {
+//   const heartbeat = await chroma.heartbeat();
+//   console.log("ChromaDB is running:", heartbeat);
+// } catch (error) {
+//   console.error("ChromaDB connection failed:", error.message);
+// }
+
+const WEB_COLLECTION = `WEB_SCRAPED_DATA_COLLECTION`;
 
 async function scrapeWebpage(url = "") {
   const { data } = await axios.get(url);
@@ -38,24 +41,53 @@ async function scrapeWebpage(url = "") {
 }
 
 export async function generateVectorEmbeddings({ url, text }) {
-  const model = google.textEmbeddingModel("text-embedding-004");
-  const response = await model.embedText({
+  const model = google.textEmbeddingModel("text-embedding-004", {
+    taskType: "RETRIEVAL_DOCUMENT",
+  });
+  const response = await model.doEmbed({
     text: `${text}`,
     url: url,
   });
   return response.embeddings[0];
 }
 
+async function insertIntoChromaDB({ embedding, url, head, body = "" }) {
+  const collection = await chroma.createCollection({ name: WEB_COLLECTION });
+
+  await collection.add({
+    ids: [url],
+    embeddings: [embedding],
+    metadatas: [{ url, head, body }],
+  });
+}
+
 async function ingest(url = "") {
+  console.log(`✨ Ingesting URL: ${url}`);
   const { head, body, internalLinks } = await scrapeWebpage(url);
   const bodyChunks = chunkText(body, 1000); // Chunk the body text into 1000-word segments
   const headEmbedding = await generateVectorEmbeddings({ text: head });
+  await insertIntoChromaDB({
+    embedding: headEmbedding,
+    url,
+  });
   for (const chunk of bodyChunks) {
     const bodyEmbedding = await generateVectorEmbeddings({ text: chunk });
-    console.log("Chunk Embedding:", bodyEmbedding);
+    await insertIntoChromaDB({
+      embedding: bodyEmbedding,
+      url,
+      head,
+      body: chunk,
+    });
   }
+
+  for (const link of internalLinks) {
+    const _url = `${url}${link}`;
+    await ingest(_url);
+  }
+  console.log(`✅ Ingesting Success URL: ${url}`);
 }
-scrapeWebpage("https://piyushgarg.dev").then(console.log);
+
+ingest("https://www.piyushgarg.dev");
 
 function chunkText(text, chunkSize) {
   if (!text || typeof text !== "string") {
