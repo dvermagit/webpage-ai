@@ -64,7 +64,7 @@ async function insertIntoChromaDB({ embedding, url, head, body = "" }) {
 async function ingest(url = "") {
   console.log(`✨ Ingesting URL: ${url}`);
   const { head, body, internalLinks } = await scrapeWebpage(url);
-  const bodyChunks = chunkText(body, 1000); // Chunk the body text into 1000-word segments
+  const bodyChunks = chunkText(body, 2000); // Chunk the body text into 1000-word segments
   const headEmbedding = await generateVectorEmbeddings({ text: head });
   await insertIntoChromaDB({
     embedding: headEmbedding,
