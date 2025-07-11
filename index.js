@@ -153,9 +153,10 @@ async function ingest(url = "") {
   console.log(`✅ Ingesting Success URL: ${url}`);
 }
 
+await resetCollection(); // Reset the collection before starting
 ingest("https://www.piyushgarg.dev");
-ingest("https://www.piyushgarg.dev/about");
-ingest("https://www.piyushgarg.dev/cohort");
+// ingest("https://www.piyushgarg.dev/about");
+// ingest("https://www.piyushgarg.dev/cohort");
 
 function chunkText(text, chunkSize) {
   if (!text || typeof text !== "string") {
