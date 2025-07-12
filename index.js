@@ -430,7 +430,7 @@ async function chat(question = " ") {
     ].join("\n\n");
 
     const response = await generateText({
-      model: google("gemini-1.5-flash-latest"),
+      model: google("gemini-2.5-pro"),
       messages: [
         {
           role: "system",
